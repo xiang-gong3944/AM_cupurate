@@ -19,7 +19,6 @@ def dos(model,E_fineness=1000,sigma2 = 0.0001):
 def kF_index(model):
     """
     フェルミ面のインデックスを計算する
-
     """
     if(model.kF_index.size != 3):
         return
