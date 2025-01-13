@@ -54,35 +54,24 @@ def _spin(enes, eigenstate):
     Returns:
         spin : 各サイトのスピンの大きさ
 
-    Remarks:
-        ハミルトニアンの作り方に依存するため注意
     """
-    spin = []
-    n_orbit = 6
-    for l in range(n_orbit*2):
-        sp = (np.abs(eigenstate[0,l])**2
-                +np.abs(eigenstate[1,l])**2
-                +np.abs(eigenstate[2,l])**2
-                +np.abs(eigenstate[3,l])**2
-                +np.abs(eigenstate[4,l])**2
-                +np.abs(eigenstate[5,l])**2
-                -np.abs(eigenstate[6,l])**2
-                -np.abs(eigenstate[7,l])**2
-                -np.abs(eigenstate[8,l])**2
-                -np.abs(eigenstate[9,l])**2
-                -np.abs(eigenstate[10,l])**2
-                -np.abs(eigenstate[11,l])**2
-                )
-        spin.append(sp)
-    del l
+    n_orbit = op.n_orbit
+    # 上向きと下向きスピンの差を計算
+    spin_differences = [
+        np.sum(np.abs(eigenstate[:n_orbit, l])**2) -
+        np.sum(np.abs(eigenstate[n_orbit:, l])**2)
+        for l in range(n_orbit * 2)
+    ]
 
-    for l in range(n_orbit):
-        if(np.abs(enes[2*l]-enes[2*l + 1])<1e-12):
-            spin[2*l] = 0
-            spin[2*l+1] = 0
-    del l
+    # エネルギー縮退している状態のスピンをゼロに設定
+    ENERGY_DEGENERACY_THRESHOLD = 1e-12
+    for orbital in range(n_orbit):
+        if np.abs(enes[2*orbital] - enes[2*orbital + 1]) < ENERGY_DEGENERACY_THRESHOLD:
+            spin_differences[2*orbital] = 0
+            spin_differences[2*orbital + 1] = 0
 
-    return np.array(spin)
+    return np.array(spin_differences)
+
 
 class HubbardModel:
     def __init__(self,n_carrier=2.0,k_mesh=31,U=8,a=0.5,iteration=400,err=1e-6,fineness=5):
