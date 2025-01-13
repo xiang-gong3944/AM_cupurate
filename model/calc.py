@@ -93,7 +93,7 @@ def kF_index(model):
     return
 
 
-def spin_conductivity(model,mu="x",nu="y",gamma=0.0001):
+def spin_conductivity(model,mu,nu,gamma=0.0001):
     """直流スピン伝導度の計算
 
     Args:
