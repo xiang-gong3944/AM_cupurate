@@ -12,7 +12,7 @@ Tpp0 = (Vpps-Vppp) / 2
 Tpd0 = np.sqrt(3) * Vpds / 2
 
 # クーロン相互作用の強さ
-Ud = 8.0
+# Ud = 8.0
 Up = 4.0
 Upd = 1.0
 
