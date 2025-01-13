@@ -128,6 +128,8 @@ class HubbardModel:
         self._calc_scf(iteration ,err)
         self._calc_nscf(fineness)
 
+        self.file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(self.a*100), self.k_mesh, int(self.U*100))
+
 
     def _calc_scf(self,iteration = 400,err = 1e-6):
         """自己無頓着計算を行う。delta と ef を決定する。
