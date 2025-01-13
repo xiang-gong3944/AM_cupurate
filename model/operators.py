@@ -36,7 +36,7 @@ def Hamiltonian(kx, ky, delta, a0, Ud):
     """
 
     H = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
-    Tpp = Tpd0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
@@ -102,7 +102,7 @@ def Current(kx, ky, mu, a0):
     """
 
     J = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
-    Tpp = Tpd0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
@@ -178,7 +178,7 @@ def SpinCurrent(kx, ky, mu, a0):
     """
 
     J = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
-    Tpp = Tpd0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
