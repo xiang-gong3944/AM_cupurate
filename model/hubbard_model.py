@@ -85,16 +85,16 @@ def _spin(enes, eigenstate):
     return np.array(spin)
 
 class HubbardModel:
-    def __init__(self,Np=2.0,a=0.5,k_mesh=31,U=8,iteration=400,err=1e-6,fineness=5):
+    def __init__(self,n_carrier=2.0,k_mesh=31,U=8,a=0.5,iteration=400,err=1e-6,fineness=5):
         """モデルのパラメータの設定
 
         Args:
             U (float): オンサイト相互作用の大きさ Defaults to 8.0
-            Np (float,optional): 単位胞内でのホールの数 Defaults to 2.0
+            n_carrier (float,optional): 単位胞内でのキャリアの数 Defaults to 2.0
             a: 格子のひずみ具合 Defaults to a=0.5 でひずみ無し
             k_mesh (int,optional): k点の細かさ Defaults to 31.
         """
-        self.Np = Np
+        self.n_carrier = n_carrier
         self.a = a
         self.k_mesh = k_mesh
         self.k_mesh_fine = k_mesh
@@ -105,8 +105,8 @@ class HubbardModel:
         self.Current = partial(op.SpinCurrent,a0 = self.a)
         self.n_orbit = op.n_orbit
 
-        ne1 = Np/4.0 + 0.1
-        ne2 = Np/4.0 - 0.1
+        ne1 = n_carrier/4.0 + 0.1
+        ne2 = n_carrier/4.0 - 0.1
         self.N_site_scf = np.array([
                         [ne1,ne2,0,0,0,0,ne2,ne1,0,0,0,0]])
         self.Ef_scf  = np.array([0])
@@ -144,7 +144,7 @@ class HubbardModel:
             print("SCF calculation was already done.")
             return
 
-        print("SCF calculation start. Np = {:1.2f}, Ud = {:1.2f}, err < {:1.1e}".format(self.Np,self.U,err))
+        print("SCF calculation start. N = {:1.2f}, Ud = {:1.2f}, err < {:1.1e}".format(self.n_carrier,self.U,err))
 
         kx,ky = self._gen_kmesh()
 
@@ -170,8 +170,8 @@ class HubbardModel:
                 # 求めたエネルギー固有値をソートして下から何番目というのを探してやればよい
                 # 絶縁体のときのことを考えると平均をとる必要がある
                 sorted_enes = np.sort(enes)
-                ef = (sorted_enes[int(self.k_mesh * self.k_mesh * self.Np) - 1]
-                      + sorted_enes[int(self.k_mesh * self.k_mesh * self.Np)])/2
+                ef = (sorted_enes[int(self.k_mesh * self.k_mesh * self.n_carrier) - 1]
+                      + sorted_enes[int(self.k_mesh * self.k_mesh * self.n_carrier)])/2
                 self.Ef_scf = np.append(self.Ef_scf,ef)
 
                 # scf で求める値の初期化
@@ -222,8 +222,8 @@ class HubbardModel:
                 self.delta = self.Delta_scf[-1]
                 self.ef    = self.Ef_scf[-1]
 
-                print("SCF loop converged.  Np = {:1.2f}, err < {:1.1e}, loop = {:2d}, delta = {:1.2e}\n"
-                      .format(self.Np,err,scf_iteration*3,self.delta))
+                print("SCF loop converged.  N = {:1.2f}, err < {:1.1e}, loop = {:2d}, delta = {:1.2e}\n"
+                      .format(self.n_carrier,err,scf_iteration*3,self.delta))
 
                 return
 
@@ -232,8 +232,8 @@ class HubbardModel:
         # 収束しなかったときの処理
         self.delta = self.Delta_scf[-1]
         self.ef    = self.Ef_scf[-1]
-        print('\033[41m'+"Calculation didn't converge. err > {:1.1e},Np = {:1.2f} loop = {:2d},delta = {:1.2e}"
-              .format(err,self. Np,iteration*3,self.delta)+'\033[0m')
+        print('\033[41m'+"Calculation didn't converge. err > {:1.1e},N = {:1.2f} loop = {:2d},delta = {:1.2e}"
+              .format(err,self.n_carrier,iteration*3,self.delta)+'\033[0m')
         print(f"latter deltas are {self.Delta_scf[-4:-1]}\n")
 
         return
