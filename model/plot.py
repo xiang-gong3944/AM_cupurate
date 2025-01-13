@@ -39,8 +39,7 @@ def nsite(model, folder_path="./output/temp/", is_plt_show = True):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(model.a*100), model.k_mesh, int(model.U*100))
-    image_path = folder_path +"nsite"+ file_index
+    image_path = folder_path +"nsite"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
     if is_plt_show:
@@ -73,8 +72,7 @@ def scf(model, folder_path="./output/temp/", is_plt_show = True):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(model.a*100), model.k_mesh, int(model.U*100))
-    image_path = folder_path +"scf"+ file_index
+    image_path = folder_path +"scf"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
     if is_plt_show:
@@ -178,8 +176,7 @@ def band(model, folder_path="./output/temp/", is_plt_show = True):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(model.a*100), model.k_mesh, int(model.U*100))
-    image_path = folder_path +"band"+ file_index
+    image_path = folder_path +"band"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
     if is_plt_show:
@@ -273,8 +270,7 @@ def dos(model, folder_path="./output/temp/", is_plt_show =True):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(model.a*100), model.k_mesh, int(model.U*100))
-    image_path = folder_path +"dos"+ file_index
+    image_path = folder_path +"dos"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
     if is_plt_show:
@@ -334,8 +330,7 @@ def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
 
-    file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(model.a*100), model.k_mesh, int(model.U*100))
-    image_path = folder_path +"fermi"+ file_index
+    image_path = folder_path +"fermi"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
     if is_plt_show:
