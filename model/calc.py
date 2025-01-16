@@ -161,3 +161,26 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))
 
     return chi
+
+
+def fermi_dist(ene,ef,beta=1000):
+    a = beta*(ene-ef)
+    # オーバーフローを防ぐ
+    if(a > 700):
+        a=700
+    elif(a < -700):
+        a=-700
+
+    return 1/(np.exp(a)+1)
+
+
+def fermi_dist_diff(ene,ef,beta=1000):
+    a = beta*(ene-ef)
+    # オーバーフローを防ぐ
+    if(a > 700):
+        a=700
+    elif(a < -700):
+        a=-700
+
+    return -beta/(2*np.cosh(a/2))**2
+
