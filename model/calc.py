@@ -116,12 +116,11 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
     # ブリュアンゾーンのメッシュの生成
     kx,ky = model._gen_kmesh()
 
-    # バンド間遷移
     for i in range(model.k_mesh):
         for j in range(model.k_mesh):
 
             Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.SpinCurrent(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
-            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @     model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
+            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
 
             for m in range(model.n_orbit*2):
                 for n in range(model.n_orbit*2):
@@ -129,10 +128,12 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
                     Jmu = Jmu_matrix[m,n]
                     Jnu  = Jnu_matrix[n,m]
 
-                    if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-6):
+                    # バンド間遷移 (van Vleck 項)
+                    if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-4):
                         # フェルミ分布
-                        efm = 1 if (model.enes[i,j][m]<model.ef) else 0
-                        efn = 1 if (model.enes[i,j][n]<model.ef) else 0
+
+                        chi += Jmu * Jnu * (efm - efn) / (
+                            (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
 
                     # バンド内遷移
                     else:
