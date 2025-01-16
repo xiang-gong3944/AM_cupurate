@@ -93,7 +93,7 @@ def kF_index(model):
     return
 
 
-def spin_conductivity(model,mu,nu,gamma=0.0001):
+def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
     """直流スピン伝導度の計算
 
     Args:
@@ -152,6 +152,27 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))
 
     return chi
+
+def spin_cond_omega(model, mu: str, nu: str, omegas):
+    """スピン伝導度の周波数特性
+
+    Args:
+        model (hubbardmodel.HubbardModel): ハバード模型のインスタンス
+        mu (str): スピン流の流れる方向
+        nu (str): 電場をかける方向
+        omegas (ndarray): 調べる振動数の配列
+
+    Returns:
+        chis (ndarray): 複素スピン伝導度のリスト
+    """
+
+    chis = np.array([])
+    for omega in omegas:
+        print(f"omega = {omega}")
+        chi = spin_conductivity(model, "x", "y", omega)
+        chis = np.append(chis, chi)
+
+    return chis
 
 
 def fermi_dist(ene,ef,beta=1000):
