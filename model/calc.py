@@ -93,7 +93,7 @@ def kF_index(model):
     return
 
 
-def spin_conductivity(model,mu,nu,gamma=0.0001):
+def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
     """直流スピン伝導度の計算
 
     Args:
@@ -108,10 +108,6 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
         print("NSCF calculation wasn't done yet.")
         return
 
-    # フェルミ面の計算をしていなかったらする
-    if(model.kF_index.size == 3):
-        kF_index(model)
-
     print("SpinConductivity calculation start.")
 
     # スピン伝導度 複素数として初期化
@@ -120,12 +116,11 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
     # ブリュアンゾーンのメッシュの生成
     kx,ky = model._gen_kmesh()
 
-    # バンド間遷移
     for i in range(model.k_mesh):
         for j in range(model.k_mesh):
 
             Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.SpinCurrent(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
-            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @     model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
+            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
 
             for m in range(model.n_orbit*2):
                 for n in range(model.n_orbit*2):
@@ -133,31 +128,71 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
                     Jmu = Jmu_matrix[m,n]
                     Jnu  = Jnu_matrix[n,m]
 
-                    if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-6):
+                    # バンド間遷移 (van Vleck 項)
+                    if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-4):
                         # フェルミ分布
-                        efm = 1 if (model.enes[i,j][m]<model.ef) else 0
-                        efn = 1 if (model.enes[i,j][n]<model.ef) else 0
+                        efm = fermi_dist(model.enes[i,j][m],model.ef)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef)
 
-                        add_chi = Jmu * Jnu * (efm - efn) / ((model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n]+1j*gamma))
-                        chi += add_chi
+                        chi += Jmu * Jnu * (efm - efn) / (
+                            (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
+
+                    # バンド内遷移
+                    else:
+                        # フェルミ分布の微分
+                        f_diff = (fermi_dist_diff(model.enes[i,j][m],model.ef)
+                                  +fermi_dist_diff(model.enes[i,j][n],model.ef))/2
+
+                        chi += Jmu * Jnu * f_diff / (omega + 1j*gamma)
     del i,j,m,n
 
-    # バンド内遷移
-    for i,j,m in model.kF_index:
-
-            Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.SpinCurrent(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
-            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @     model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
-
-            Jmu = Jmu_matrix[m,m]
-            Jnu = Jnu_matrix[m,m]
-
-            chi += 1j * Jmu * Jnu / gamma
-
-    # del i,j,m
-
-    chi /= (model.k_mesh*model.k_mesh*1j)
+    chi /= (1j*model.k_mesh*model.k_mesh)
 
     print("Spin Conductivity calculation finished")
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))
 
     return chi
+
+def spin_cond_omega(model, mu: str, nu: str, omegas):
+    """スピン伝導度の周波数特性
+
+    Args:
+        model (hubbardmodel.HubbardModel): ハバード模型のインスタンス
+        mu (str): スピン流の流れる方向
+        nu (str): 電場をかける方向
+        omegas (ndarray): 調べる振動数の配列
+
+    Returns:
+        chis (ndarray): 複素スピン伝導度のリスト
+    """
+
+    chis = np.array([])
+    for omega in omegas:
+        print(f"omega = {omega}")
+        chi = spin_conductivity(model, "x", "y", omega)
+        chis = np.append(chis, chi)
+
+    return chis
+
+
+def fermi_dist(ene,ef,beta=1000):
+    a = beta*(ene-ef)
+    # オーバーフローを防ぐ
+    if(a > 700):
+        a=700
+    elif(a < -700):
+        a=-700
+
+    return 1/(np.exp(a)+1)
+
+
+def fermi_dist_diff(ene,ef,beta=1000):
+    a = beta*(ene-ef)
+    # オーバーフローを防ぐ
+    if(a > 700):
+        a=700
+    elif(a < -700):
+        a=-700
+
+    return -beta/(2*np.cosh(a/2))**2
+
