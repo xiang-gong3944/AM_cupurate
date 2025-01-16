@@ -131,6 +131,8 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
                     # バンド間遷移 (van Vleck 項)
                     if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-4):
                         # フェルミ分布
+                        efm = fermi_dist(model.enes[i,j][m],model.ef)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef)
 
                         chi += Jmu * Jnu * (efm - efn) / (
                             (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
