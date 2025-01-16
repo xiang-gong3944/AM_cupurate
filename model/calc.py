@@ -108,10 +108,6 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
         print("NSCF calculation wasn't done yet.")
         return
 
-    # フェルミ面の計算をしていなかったらする
-    if(model.kF_index.size == 3):
-        kF_index(model)
-
     print("SpinConductivity calculation start.")
 
     # スピン伝導度 複素数として初期化
@@ -138,24 +134,16 @@ def spin_conductivity(model,mu,nu,gamma=0.0001):
                         efm = 1 if (model.enes[i,j][m]<model.ef) else 0
                         efn = 1 if (model.enes[i,j][n]<model.ef) else 0
 
-                        add_chi = Jmu * Jnu * (efm - efn) / ((model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n]+1j*gamma))
-                        chi += add_chi
+                    # バンド内遷移
+                    else:
+                        # フェルミ分布の微分
+                        f_diff = (fermi_dist_diff(model.enes[i,j][m],model.ef)
+                                  +fermi_dist_diff(model.enes[i,j][n],model.ef))/2
+
+                        chi += Jmu * Jnu * f_diff / (omega + 1j*gamma)
     del i,j,m,n
 
-    # バンド内遷移
-    for i,j,m in model.kF_index:
-
-            Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.SpinCurrent(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
-            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @     model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
-
-            Jmu = Jmu_matrix[m,m]
-            Jnu = Jnu_matrix[m,m]
-
-            chi += 1j * Jmu * Jnu / gamma
-
-    # del i,j,m
-
-    chi /= (model.k_mesh*model.k_mesh*1j)
+    chi /= (1j*model.k_mesh*model.k_mesh)
 
     print("Spin Conductivity calculation finished")
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))
