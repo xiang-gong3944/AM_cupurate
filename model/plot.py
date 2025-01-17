@@ -338,3 +338,53 @@ def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
     else:
         plt.close()
     return
+
+def spin_conductivity(model, mu: str, nu: str):
+
+    munu = mu + nu
+    if(munu == "xy"):
+        chi = model.chi_xy
+    elif(munu == "yx"):
+        chi = model.chi_yx
+    elif(munu == "xx"):
+        chi = model.chi_xx
+    elif(munu == "yy"):
+        chi = model.chi_yy
+    else:
+        print("invalid arguments given")
+        return
+
+    if(chi is None):
+        print("spin_conducticity has not calculated")
+        return
+
+    chi = chi.real
+
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    chi_max = np.max(np.abs(chi))
+    chi_min = -chi_max
+
+    mappable = ax.pcolormesh(kx, ky, chi, cmap="bwr", vmax = chi_max, vmin=chi_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$\chi_{{ {:s} }}$ = {:1.2f}".format(munu, np.sum(chi)))
+
+    plt.axis("square")
+    plt.show()
+
+    return

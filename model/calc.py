@@ -112,6 +112,7 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
 
     # スピン伝導度 複素数として初期化
     chi = 0.0 + 0.0*1j
+    chis = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
 
     # ブリュアンゾーンのメッシュの生成
     kx,ky = model._gen_kmesh()
@@ -119,6 +120,7 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
     for i in range(model.k_mesh):
         for j in range(model.k_mesh):
 
+            chi_ij = 0.0 + 0.0*1j
             Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.SpinCurrent(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
             Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
 
@@ -126,16 +128,18 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
                 for n in range(model.n_orbit*2):
 
                     Jmu = Jmu_matrix[m,n]
-                    Jnu  = Jnu_matrix[n,m]
+                    Jnu = Jnu_matrix[n,m]
 
                     # バンド間遷移 (van Vleck 項)
-                    if(np.abs(model.enes[i,j,m]-model.enes[i,j,n]) > 1e-4):
-                        # フェルミ分布
-                        efm = fermi_dist(model.enes[i,j][m],model.ef)
-                        efn = fermi_dist(model.enes[i,j][n],model.ef)
+                    if(np.abs(model.enes[i,j][m]-model.enes[i,j][n])>1e-6):
 
-                        chi += Jmu * Jnu * (efm - efn) / (
+                        efm = fermi_dist(model.enes[i,j][m],model.ef, 1000)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef, 1000)
+
+                        add_chi = Jmu * Jnu * (efm - efn) / (
                             (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
+                        chi_ij += add_chi
+                        chi += add_chi
 
                     # バンド内遷移
                     else:
@@ -143,10 +147,24 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
                         f_diff = (fermi_dist_diff(model.enes[i,j][m],model.ef)
                                   +fermi_dist_diff(model.enes[i,j][n],model.ef))/2
 
-                        chi += Jmu * Jnu * f_diff / (omega + 1j*gamma)
-    del i,j,m,n
+                        add_chi = Jmu * Jnu * f_diff / (omega + 1j*gamma)
+                        chi_ij += add_chi
+                        chi += add_chi
 
-    chi /= (1j*model.k_mesh*model.k_mesh)
+            chis[i,j] = chi_ij
+
+    chi /= (model.k_mesh*model.k_mesh*1j)
+    chis /= (model.k_mesh*model.k_mesh*1j)
+
+    munu = mu + nu
+    if (munu == "xx"):
+        model.chi_xx = chis
+    elif (munu == "yy"):
+        model.chi_yy = chis
+    elif (munu == "xy"):
+        model.chi_xy = chis
+    elif (munu == "yx"):
+        model.chi_yx = chis
 
     print("Spin Conductivity calculation finished")
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))

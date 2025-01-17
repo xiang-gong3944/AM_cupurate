@@ -2,6 +2,7 @@ import numpy as np
 from functools import partial
 
 from model import operators as op
+# from model import fork_0117 as op
 
 # ちょくちょくつかう関数
 def _delta(N_site):
@@ -111,6 +112,11 @@ class HubbardModel:
 
         self.E          = 0
         self.dos        = np.array([])
+
+        self.chi_xx = None
+        self.chi_yy = None
+        self.chi_xy = None
+        self.chi_yx = None
 
         self.kF_index = np.array([[-1,-1,-1]])
 
