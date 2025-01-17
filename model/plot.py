@@ -339,6 +339,37 @@ def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
         plt.close()
     return
 
+
+def spin(model, beta:float = 1000):
+    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2)
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    spin_max = np.max(np.abs(spin))
+    spin_min = -spin_max
+
+    mappable = ax.pcolormesh(kx, ky, spin, cmap="bwr", vmax=spin_max, vmin = spin_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.axis("square")
+    plt.show()
+
+    return
+
+
 def spin_conductivity(model, mu: str, nu: str):
 
     munu = mu + nu
