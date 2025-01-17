@@ -281,19 +281,14 @@ def dos(model, folder_path="./output/temp/", is_plt_show =True):
     return
 
 
-def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
+def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True, is_rotate = False):
     if(model.kF_index.size == 3):
         calc.kF_index(model)
-
-    kx, ky = model._gen_kmesh()
 
     colors = np.full(model.kF_index.shape[0], "tab:green")
     colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] < -0.1] = "tab:blue"
     colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] > 0.1] = "#ff7f0e"
     # colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] > 0.1] = "tab:orange" # これだとエラーが出る
-
-    rotate_kx = (kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
-    rotate_ky = (-kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -308,20 +303,42 @@ def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
     plt.rcParams['font.family'] ='Times New Roman'
     plt.rcParams['mathtext.fontset'] = 'stix'
 
-    plt.scatter(rotate_kx, rotate_ky, c=colors, s=1)
-    plt.scatter(rotate_kx+np.pi, rotate_ky+np.pi, c=colors, s=1)
-    plt.scatter(rotate_kx+np.pi, rotate_ky-np.pi, c=colors, s=1)
-    plt.scatter(rotate_kx-np.pi, rotate_ky+np.pi, c=colors, s=1)
-    plt.scatter(rotate_kx-np.pi, rotate_ky-np.pi, c=colors, s=1)
+    kx, ky = model._gen_kmesh()
+    if (is_rotate):
+        rotate_kx = (kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
+        rotate_ky = (-kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
+        plt.scatter(rotate_kx, rotate_ky, c=colors, s=0.1)
+        plt.scatter(rotate_kx+np.pi, rotate_ky+np.pi, c=colors, s=0.1)
+        plt.scatter(rotate_kx+np.pi, rotate_ky-np.pi, c=colors, s=0.1)
+        plt.scatter(rotate_kx-np.pi, rotate_ky+np.pi, c=colors, s=0.1)
+        plt.scatter(rotate_kx-np.pi, rotate_ky-np.pi, c=colors, s=0.1)
 
-    plt.plot([np.pi, 0, -np.pi, 0, np.pi], [0, np.pi, 0, -np.pi, 0], linestyle = "dashed", c = "grey")
-    plt.arrow(-2.1,2.1, 4.2, -4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color ="grey")
-    plt.arrow(-2.1, -2.1, 4.2, 4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color = "grey")
-    plt.text(2.3, -2.3, "$k_x$")
-    plt.text(2.3, 2.3, "$k_y$")
+        plt.plot([np.pi, 0, -np.pi, 0, np.pi], [0, np.pi, 0, -np.pi, 0], linestyle = "dashed", c = "grey")
+        plt.arrow(-2.1,2.1, 4.2, -4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color ="grey")
+        plt.arrow(-2.1, -2.1, 4.2, 4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color = "grey")
+        plt.text(2.3, -2.3, "$k_x$")
+        plt.text(2.3, 2.3, "$k_y$")
 
-    plt.xlabel("$k_x'$")
-    plt.ylabel("$k_y'$")
+        plt.xlabel("$k_x'$")
+        plt.ylabel("$k_y'$")
+
+    else:
+        kF_index_arr = np.array(model.kF_index)
+
+        # Spinsの値に基づいて色を選択
+        colors = np.select(
+            [model.spins[kF_index_arr[:, 0], kF_index_arr[:, 1], kF_index_arr[:, 2]] > 0.1,
+            model.spins[kF_index_arr[:, 0], kF_index_arr[:, 1], kF_index_arr[:, 2]] < -0.1],
+            ["tab:orange", "tab:blue"],
+            default="tab:green"
+        )
+
+        # 座標を取り出し
+        points = np.array([(kx[i, j], ky[i, j]) for i, j, m in model.kF_index])
+
+        plt.scatter(points[:, 0], points[:, 1], c=colors, s=0.1)
+        plt.xlabel("$k_x$")
+        plt.ylabel("$k_y$")
 
     plt.axis("square")
     plt.xlim(-np.pi, np.pi)
@@ -337,4 +354,85 @@ def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True):
         plt.show()
     else:
         plt.close()
+    return
+
+
+def spin(model, beta:float = 1000):
+    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2)
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    spin_max = np.max(np.abs(spin))
+    spin_min = -spin_max
+
+    mappable = ax.pcolormesh(kx, ky, spin, cmap="bwr", vmax=spin_max, vmin = spin_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.axis("square")
+    plt.show()
+
+    return
+
+
+def spin_conductivity(model, mu: str, nu: str):
+
+    munu = mu + nu
+    if(munu == "xy"):
+        chi = model.chi_xy
+    elif(munu == "yx"):
+        chi = model.chi_yx
+    elif(munu == "xx"):
+        chi = model.chi_xx
+    elif(munu == "yy"):
+        chi = model.chi_yy
+    else:
+        print("invalid arguments given")
+        return
+
+    if(chi is None):
+        print("spin_conducticity has not calculated")
+        return
+
+    chi = chi.real
+
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    chi_max = np.max(np.abs(chi))
+    chi_min = -chi_max
+
+    mappable = ax.pcolormesh(kx, ky, chi, cmap="bwr", vmax = chi_max, vmin=chi_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$\chi_{{ {:s} }}$ = {:1.2f}".format(munu, np.sum(chi)))
+
+    plt.axis("square")
+    plt.show()
+
     return
