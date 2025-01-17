@@ -175,24 +175,20 @@ def spin_cond_omega(model, mu: str, nu: str, omegas):
     return chis
 
 
-def fermi_dist(ene,ef,beta=1000):
-    a = beta*(ene-ef)
+def fermi_dist(ene,ef: float,beta: float=1000):
+    # ene が数字でも配列でも numpy 配列に変換
+    a = np.array(beta*(ene-ef))
     # オーバーフローを防ぐ
-    if(a > 700):
-        a=700
-    elif(a < -700):
-        a=-700
+    a = np.clip(a, -700, 700)
 
     return 1/(np.exp(a)+1)
 
 
-def fermi_dist_diff(ene,ef,beta=1000):
-    a = beta*(ene-ef)
+def fermi_dist_diff(ene,ef: float,beta: float=1000):
+    # ene が数字でも配列でも numpy 配列に変換
+    a = np.array(beta*(ene-ef))
     # オーバーフローを防ぐ
-    if(a > 700):
-        a=700
-    elif(a < -700):
-        a=-700
+    a = np.clip(a, -700, 700)
 
     return -beta/(2*np.cosh(a/2))**2
 
