@@ -125,6 +125,9 @@ def band(model, **kwargs):
     image_path = option["folder_path"] +"band"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
     if option["is_plt_show"]:
         plt.show()
     else:
@@ -220,6 +223,9 @@ def dos(model, **kwargs):
 
     image_path = option["folder_path"] +"dos"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
 
     if option["is_plt_show"]:
         plt.show()
