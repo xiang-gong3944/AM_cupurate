@@ -107,8 +107,8 @@ def band(model, **kwargs):
     plt.xlim(label_loc[0], label_loc[-1])
     plt.ylim(Ymin, Ymax)
 
-    colors = ["tab:blue", "tab:green","tab:orange"]
-    cmap_name = LinearSegmentedColormap.from_list("custom",colors, 10)
+    colors = ["tab:blue", "tab:purple","tab:red"]
+    cmap_name = LinearSegmentedColormap.from_list("custom",colors)
 
     for i in range(model.n_orbit*2):
         plt.scatter(distances, bands[:,i], c=spins[:,i]/2, cmap=cmap_name, vmin=-0.5, vmax=0.5, s=1)
