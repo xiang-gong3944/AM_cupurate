@@ -320,6 +320,8 @@ def spin_conductivity(model, mu: str, nu: str, **kwargs):
     ax.xaxis.set_ticks_position('both')
     plt.rcParams['xtick.direction'] = 'in'
     plt.rcParams['ytick.direction'] = 'in'
+    plt.xlim(-np.pi,np.pi)
+    plt.ylim(-np.pi,np.pi)
     plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
     plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
 
@@ -332,6 +334,30 @@ def spin_conductivity(model, mu: str, nu: str, **kwargs):
 
     chi_max = np.max(np.abs(chi))
     chi_min = -chi_max
+
+    mappable = ax.pcolormesh(kx, ky, chi, cmap="seismic", vmax = chi_max, vmin=chi_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$\chi_{{ {:s} }} =$ {:1.2f}, $E_f =$ {:1.1f} ".format(munu, np.sum(chi), model.ef))
+
+    plt.axis("square")
+
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] +f"spin_conductivity_{munu}"+ model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+    return
+
 
 def electrical_conductivity(model, mu: str, nu: str, **kwargs):
     option = {**defaults, **kwargs}
