@@ -94,24 +94,21 @@ def kF_index(model):
 
 
 def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
-    """直流スピン伝導度の計算
+    """スピン伝導度の計算
 
     Args:
-        mu (str, optional): スピンの流れる方向. Defaults to "x".
-        nu (str, optional): 電場を加える方向. Defaults to "y".
+        mu (str): スピンの流れる方向.
+        nu (str): 電場を加える方向.
+        omega (float, optional): 電場の振動数. Defaults to 0
         gamma (float, optional): ダンピングファクター. Defaults to 0.0001.
 
     Returns:
         complex: 複素伝導度が帰ってくる
     """
-    if(model.enes[0,0,0] == 0):
-        print("NSCF calculation wasn't done yet.")
-        return
 
-    print("SpinConductivity calculation start.")
+    print("spin conductivity calculation start.")
 
     # スピン伝導度 複素数として初期化
-    chi = 0.0 + 0.0*1j
     chis = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
 
     # ブリュアンゾーンのメッシュの生成
@@ -139,7 +136,6 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
                         add_chi = Jmu * Jnu * (efm - efn) / (
                             (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
                         chi_ij += add_chi
-                        chi += add_chi
 
                     # バンド内遷移
                     else:
@@ -149,12 +145,11 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
 
                         add_chi = Jmu * Jnu * f_diff / (omega + 1j*gamma)
                         chi_ij += add_chi
-                        chi += add_chi
 
             chis[i,j] = chi_ij
 
-    chi /= (model.k_mesh*model.k_mesh*1j)
     chis /= (model.k_mesh*model.k_mesh*1j)
+    chi = np.sum(chis)
 
     munu = mu + nu
     if (munu == "xx"):
@@ -166,10 +161,11 @@ def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
     elif (munu == "yx"):
         model.chi_yx = chis
 
-    print("Spin Conductivity calculation finished")
+    print("spin conductivity calculation finished")
     print("ReChi = {:1.2e}, ImChi = {:1.2e}\n".format(np.real(chi),np.imag(chi)))
 
     return chi
+
 
 def spin_cond_omega(model, mu: str, nu: str, omegas):
     """スピン伝導度の周波数特性
