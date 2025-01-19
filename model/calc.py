@@ -189,6 +189,102 @@ def spin_cond_omega(model, mu: str, nu: str, omegas):
     return chis
 
 
+def electrical_conductivity(model,mu,nu,omega=0,gamma=0.0001):
+    """電気伝導度の計算
+
+    Args:
+        mu (str): キャリアの流れる方向.
+        nu (str): 電場を加える方向.
+        omega (float, optional): 電場の振動数. Defaults to 0
+        gamma (float, optional): ダンピングファクター. Defaults to 0.0001.
+
+    Returns:
+        complex: 複素伝導度が帰ってくる
+    """
+
+    print("electrical conductivity calculation start.")
+
+    # 電気伝導度 複素数として初期化
+    sigmas = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
+
+    # ブリュアンゾーンのメッシュの生成
+    kx,ky = model._gen_kmesh()
+
+    for i in range(model.k_mesh):
+        for j in range(model.k_mesh):
+
+            sigma_ij = 0.0 + 0.0*1j
+            Jmu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.Current(kx[i,j],ky[i,j],mu) @ model.eigenStates[i,j]
+            Jnu_matrix = np.conjugate(model.eigenStates[i,j].T) @ model.Current(kx[i,j],ky[i,j],nu) @ model.eigenStates[i,j]
+
+            for m in range(model.n_orbit*2):
+                for n in range(model.n_orbit*2):
+
+                    Jmu = Jmu_matrix[m,n]
+                    Jnu = Jnu_matrix[n,m]
+
+                    # バンド間遷移 (van Vleck 項)
+                    if(np.abs(model.enes[i,j][m]-model.enes[i,j][n])>1e-6):
+
+                        efm = fermi_dist(model.enes[i,j][m],model.ef, 1000)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef, 1000)
+
+                        add_sigma = Jmu * Jnu * (efm - efn) / (
+                            (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
+                        sigma_ij += add_sigma
+
+                    # バンド内遷移
+                    else:
+                        # フェルミ分布の微分
+                        f_diff = (fermi_dist_diff(model.enes[i,j][m],model.ef)
+                                  +fermi_dist_diff(model.enes[i,j][n],model.ef))/2
+
+                        add_sigma = Jmu * Jnu * f_diff / (omega + 1j*gamma)
+                        sigma_ij += add_sigma
+
+            sigmas[i,j] = sigma_ij
+
+    sigmas /= (model.k_mesh*model.k_mesh*1j)
+    sigma = np.sum(sigmas)
+
+    munu = mu + nu
+    if (munu == "xx"):
+        model.sigma_xx = sigmas
+    elif (munu == "yy"):
+        model.sigma_yy = sigmas
+    elif (munu == "xy"):
+        model.sigma_xy = sigmas
+    elif (munu == "yx"):
+        model.sigma_yx = sigmas
+
+    print("electrical conductivity calculation finished")
+    print("ReSigma = {:1.2e}, ImSigma = {:1.2e}\n".format(np.real(sigma),np.imag(sigma)))
+
+    return sigma
+
+
+def electrical_cond_omega(model, mu: str, nu: str, omegas):
+    """電気伝導度の周波数特性
+
+    Args:
+        model (hubbardmodel.HubbardModel): ハバード模型のインスタンス
+        mu (str): キャリアの流れる方向
+        nu (str): 電場をかける方向
+        omegas (ndarray): 調べる振動数の配列
+
+    Returns:
+        chis (ndarray): 複素スピン伝導度のリスト
+    """
+
+    sigmas = np.array([])
+    for omega in omegas:
+        print(f"omega = {omega}")
+        sigma = electrical_conductivity(model, "x", "y", omega)
+        sigmas = np.append(sigmas, sigma)
+
+    return sigmas
+
+
 def fermi_dist(ene,ef: float,beta: float=1000):
     # ene が数字でも配列でも numpy 配列に変換
     a = np.array(beta*(ene-ef))

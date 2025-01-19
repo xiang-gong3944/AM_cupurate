@@ -118,6 +118,11 @@ class HubbardModel:
         self.chi_xy = None
         self.chi_yx = None
 
+        self.sigma_xx = None
+        self.sigma_yy = None
+        self.sigma_xy = None
+        self.sigma_yx = None
+
         self.kF_index = np.array([[-1,-1,-1]])
 
         self.file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(self.a*100), self.k_mesh, int(self.U*100))

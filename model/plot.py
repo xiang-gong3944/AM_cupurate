@@ -427,12 +427,68 @@ def spin_conductivity(model, mu: str, nu: str):
     chi_max = np.max(np.abs(chi))
     chi_min = -chi_max
 
-    mappable = ax.pcolormesh(kx, ky, chi, cmap="bwr", vmax = chi_max, vmin=chi_min)
+def electrical_conductivity(model, mu: str, nu: str, **kwargs):
+    option = {**defaults, **kwargs}
+
+    munu = mu + nu
+    if(munu == "xy"):
+        sigma = model.sigma_xy
+    elif(munu == "yx"):
+        sigma = model.sigma_yx
+    elif(munu == "xx"):
+        sigma = model.sigma_xx
+    elif(munu == "yy"):
+        sigma = model.sigma_yy
+    else:
+        print("invalid arguments given")
+        return
+
+    if(sigma is None):
+        print("electrical conducticity has not calculated")
+        return
+
+    sigma = sigma.real
+
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xlim(-np.pi,np.pi)
+    plt.ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    sigma_max = np.max(np.abs(sigma))
+    sigma_min = -sigma_max
+
+    mappable = ax.pcolormesh(kx, ky, sigma, cmap="seismic", vmax = sigma_max, vmin=sigma_min)
     plt.colorbar(mappable, ax=ax)
 
-    plt.title("$\chi_{{ {:s} }}$ = {:1.2f}".format(munu, np.sum(chi)))
+    plt.title("$\sigma_{{ {:s} }} =$ {:1.2f}, $E_f =$ {:1.1f} ".format(munu, np.sum(sigma), model.ef))
 
     plt.axis("square")
-    plt.show()
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path =option["folder_path"] +f"electric_conductivity_{munu}"+ model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
 
     return
