@@ -9,6 +9,15 @@ import plotly.graph_objects as go
 from model import calc
 from model.hubbard_model import _spin
 
+from util import post
+
+# デフォルトのプロットオプション
+defaults = {
+        "folder_path": "./output/temp/",
+        "is_plt_show": True,
+        "is_post": False,
+    }
+
 k_points = {}
 k_points["Γ"]       = [0.0, 0.0]
 k_points["X"]        = [np.pi, 0.0]
@@ -59,10 +68,8 @@ def __gen_kpath(path, npoints = 50):
     return k_path, labels, labels_loc, distances
 
 
-def band(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
+def band(model, **kwargs):
+    option = {**defaults, **kwargs}
 
     k_path, label, label_loc, distances = __gen_kpath(path)
 
@@ -112,13 +119,13 @@ def band(model, folder_path="./output/temp/", is_plt_show = True):
     plt.title("$E_f$ = {:.5f}".format(model.ef))
     plt.colorbar()
 
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
 
-    image_path = folder_path +"band"+ model.file_index
+    image_path = option["folder_path"] +"band"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
-    if is_plt_show:
+    if option["is_plt_show"]:
         plt.show()
     else:
         plt.close()
@@ -190,7 +197,9 @@ def band3d(model):
     return
 
 
-def dos(model, folder_path="./output/temp/", is_plt_show =True):
+def dos(model, **kwargs):
+    option = {**defaults, **kwargs}
+
     if(model.dos.size < 2):
         calc.dos(model)
 
@@ -206,13 +215,13 @@ def dos(model, folder_path="./output/temp/", is_plt_show =True):
     plt.vlines(model.ef, -0.04*ysacale, 1.04*ysacale, color="gray", linestyles="dashed")
     plt.title("Ef={:.2f} eV".format(model.ef))
 
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
 
-    image_path = folder_path +"dos"+ model.file_index
+    image_path = option["folder_path"] +"dos"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
-    if is_plt_show:
+    if option["is_plt_show"]:
         plt.show()
     else:
         plt.close()
@@ -277,7 +286,8 @@ def fermi_surface(model, beta=100, **kwargs):
     return
 
 
-def spin_conductivity(model, mu: str, nu: str):
+def spin_conductivity(model, mu: str, nu: str, **kwargs):
+    option = {**defaults, **kwargs}
 
     munu = mu + nu
     if(munu == "xy"):
