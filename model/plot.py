@@ -21,67 +21,6 @@ k_points["Σ'"]      = [-np.pi/2, np.pi/2]
 path       = [("Γ","Y"),("Y","M'"),("M'","Σ'"),("Σ'","Γ"),
                            ("Γ","Σ"),("Σ","M"),("M","X"),("X","Γ")]
 
-def nsite(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
-
-    plt.figure(figsize=[12.8,4.8])
-    plt.subplot(121)
-    for i in range(model.n_orbit):
-        plt.plot(model.N_site_scf[:,i], label = "site {:d} = {:.3f}".format(i, model.N_site_scf[-1, i]))
-    plt.legend()
-    plt.subplot(122)
-    for i in range(model.n_orbit,model.n_orbit*2):
-        plt.plot(model.N_site_scf[:,i], label = "site {:d} = {:.3f}".format(i, model.N_site_scf[-1, i]))
-    plt.legend()
-
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-
-    image_path = folder_path +"nsite"+ model.file_index
-    plt.savefig(image_path, bbox_inches='tight')
-
-    if is_plt_show:
-        plt.show()
-    else:
-        plt.close()
-
-    return
-
-
-def scf(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.set_xlabel("scf loop")
-
-    ax1.set_ylabel("Delta")
-    ax1.plot(model.Delta_scf, label="Delta = {:.5f}".format(model.Delta_scf[-1]), color = "tab:blue")
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("Ef (eV)")
-    ax2.plot(model.Ef_scf, label="Ef = {:.5f}".format(model.Ef_scf[-1]), color = "tab:orange")
-    h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax1.legend(h1+h2, l1+l2)
-
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-
-    image_path = folder_path +"scf"+ model.file_index
-    plt.savefig(image_path, bbox_inches='tight')
-
-    if is_plt_show:
-        plt.show()
-    else:
-        plt.close()
-
-    return
-
 
 def __gen_kpath(path, npoints = 50):
     """バンド図を書くときの対称点に沿った波数ベクトルの列を作る
