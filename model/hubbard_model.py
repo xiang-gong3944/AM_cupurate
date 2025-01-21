@@ -84,27 +84,37 @@ class HubbardModel:
             a: 格子のひずみ具合 Defaults to a=0.5 でひずみ無し
             k_mesh (int,optional): k点の細かさ Defaults to 31.
         """
+        # 系のパラメータ
         self.n_carrier = n_carrier
         self.a = a
-        self.k_mesh = k_mesh
+        self.k_mesh = k_mesh        # 自己無撞着計算 が終わると fineness がかかった値になる
         self.k_mesh_fine = k_mesh
         self.U = U
+        self.n_orbit = op.n_orbit
 
+        # 系の演算子
         self.Hamiltonian = partial(op.Hamiltonian,a0 = self.a,Ud = self.U)
         self.SpinCurrent = partial(op.SpinCurrent,a0 = self.a)
         self.Current = partial(op.Current,a0 = self.a)
+
+        # 秩序変数の履歴
         self.Delta_scf = np.array([-0.2])
-        self.Etot_scf = np.array([0.8])
 
-        self.delta = 0
-        self.ef  = 0
+        # その他自己無撞着計算の履歴(数合わせに入れてる)
+        self.Ef_scf  = np.array([0])
+        self.Etot_scf = np.array([0])
 
-        self.enes  = 0
-        self.eigenStates = 0
-        self.spins = 0
+        # 自己無撞着計算によって決まる量
+        self.delta = None
+        self.ef  = None
 
-        self.E          = 0
-        self.dos        = np.array([])
+        self.enes  = None
+        self.eigenStates = None
+        self.spins = None
+
+        # 各計算結果
+        self.E          = None
+        self.dos        = None
 
         self.chi_xx = None
         self.chi_yy = None
@@ -224,7 +234,7 @@ class HubbardModel:
 
         print("NSCF calculation start.")
 
-        if(self.enes == 0):
+        if(self.enes is None):
             self.k_mesh *= fineness
         self.enes = np.zeros((self.k_mesh,self.k_mesh,self.n_orbit*2))
         self.eigenStates = np.zeros((self.k_mesh,self.k_mesh,self.n_orbit*2,self.n_orbit*2),dtype=np.complex128)
