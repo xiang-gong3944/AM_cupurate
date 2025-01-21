@@ -271,7 +271,7 @@ def fermi_surface(model, beta=500, **kwargs):
     fermi_surf = fermi_surf * abs_spin_spit
     ax.scatter(kx, ky, c="tab:purple", alpha=fermi_surf, s=0.1)
 
-    plt.title("$E_f$ = {:1.1f}".format(model.ef))
+    plt.title("$N$ = {:1.1f}".format(model.n_carrier))
     plt.axis("square")
 
     if not os.path.isdir(option["folder_path"]):
@@ -442,7 +442,7 @@ def spin_conductivity(model, mu: str, nu: str, **kwargs):
     mappable = ax.pcolormesh(kx, ky, chi, cmap="seismic", vmax = chi_max, vmin=chi_min)
     plt.colorbar(mappable, ax=ax)
 
-    plt.title("$\chi_{{ {:s} }} =$ {:1.2f}, $E_f =$ {:1.1f} ".format(munu, np.sum(chi), model.ef))
+    plt.title("$\chi_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(chi), model.n_carrier))
 
     plt.axis("square")
 
@@ -509,7 +509,7 @@ def electrical_conductivity(model, mu: str, nu: str, **kwargs):
     mappable = ax.pcolormesh(kx, ky, sigma, cmap="seismic", vmax = sigma_max, vmin=sigma_min)
     plt.colorbar(mappable, ax=ax)
 
-    plt.title("$\sigma_{{ {:s} }} =$ {:1.2f}, $E_f =$ {:1.1f} ".format(munu, np.sum(sigma), model.ef))
+    plt.title("$\sigma_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(sigma), model.n_carrier))
 
     plt.axis("square")
 
