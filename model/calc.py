@@ -326,7 +326,7 @@ def electrical_conductivity(model,mu:str,nu:str,omega:float=0,gamma:float=0.0001
     return sigma
 
 
-def electrical_cond_omega(model, mu: str, nu: str, omegas):
+def electrical_cond_omega(model, mu: str, nu: str, omegas, beta = 500):
     """電気伝導度の周波数特性
 
     Args:
@@ -349,6 +349,17 @@ def electrical_cond_omega(model, mu: str, nu: str, omegas):
 
 
 def fermi_dist(ene,ef: float,beta: float=1000):
+    """フェルミ分布関数
+
+    Args:
+        ene (float): エネルギー
+        ef (float): フェルミエネルギー
+        beta (float, optional): 逆温度の値. Defaults to 1000.
+
+    Returns:
+        float: f(E,ef) の値
+    """
+
     # ene が数字でも配列でも numpy 配列に変換
     a = np.array(beta*(ene-ef))
     # オーバーフローを防ぐ
@@ -358,6 +369,17 @@ def fermi_dist(ene,ef: float,beta: float=1000):
 
 
 def fermi_dist_diff(ene,ef: float,beta: float=1000):
+    """フェルミ分布関数の微分
+
+    Args:
+        ene (float): エネルギー
+        ef (float): フェルミエネルギー
+        beta (float, optional): 逆温度の値. Defaults to 1000.
+
+    Returns:
+        float: df/dE の値
+    """
+
     # ene が数字でも配列でも numpy 配列に変換
     a = np.array(beta*(ene-ef))
     # オーバーフローを防ぐ
