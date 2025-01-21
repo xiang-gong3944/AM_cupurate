@@ -235,7 +235,7 @@ def dos(model, **kwargs):
     return
 
 
-def fermi_surface(model, beta=100, **kwargs):
+def fermi_surface(model, beta=500, **kwargs):
     option = {**defaults, **kwargs}
 
     # プロットエリアの整備

@@ -156,6 +156,7 @@ def electrical_current_matrix(model,mu: str):
     return electrical_current
 
 
+def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001,beta=500):
     """スピン伝導度の計算
 
     Args:
@@ -192,8 +193,8 @@ def electrical_current_matrix(model,mu: str):
                     # バンド間遷移 (van Vleck 項)
                     if(np.abs(model.enes[i,j][m]-model.enes[i,j][n])>1e-6):
 
-                        efm = fermi_dist(model.enes[i,j][m],model.ef, 1000)
-                        efn = fermi_dist(model.enes[i,j][n],model.ef, 1000)
+                        efm = fermi_dist(model.enes[i,j][m],model.ef, beta)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef, beta)
 
                         add_chi = Jmu * Jnu * (efm - efn) / (
                             (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
@@ -229,7 +230,7 @@ def electrical_current_matrix(model,mu: str):
     return chi
 
 
-def spin_cond_omega(model, mu: str, nu: str, omegas):
+def spin_cond_omega(model, mu: str, nu: str, omegas, beta: float = 500):
     """スピン伝導度の周波数特性
 
     Args:
@@ -251,7 +252,7 @@ def spin_cond_omega(model, mu: str, nu: str, omegas):
     return chis
 
 
-def electrical_conductivity(model,mu,nu,omega=0,gamma=0.0001):
+def electrical_conductivity(model,mu:str,nu:str,omega:float=0,gamma:float=0.0001,beta:float=500):
     """電気伝導度の計算
 
     Args:
@@ -288,8 +289,8 @@ def electrical_conductivity(model,mu,nu,omega=0,gamma=0.0001):
                     # バンド間遷移 (van Vleck 項)
                     if(np.abs(model.enes[i,j][m]-model.enes[i,j][n])>1e-6):
 
-                        efm = fermi_dist(model.enes[i,j][m],model.ef, 1000)
-                        efn = fermi_dist(model.enes[i,j][n],model.ef, 1000)
+                        efm = fermi_dist(model.enes[i,j][m],model.ef, beta)
+                        efn = fermi_dist(model.enes[i,j][n],model.ef, beta)
 
                         add_sigma = Jmu * Jnu * (efm - efn) / (
                             (model.enes[i,j][m]-model.enes[i,j][n])*(model.enes[i,j][m]-model.enes[i,j][n] + omega + 1j*gamma))
@@ -341,7 +342,7 @@ def electrical_cond_omega(model, mu: str, nu: str, omegas):
     sigmas = np.array([])
     for omega in omegas:
         print(f"omega = {omega}")
-        sigma = electrical_conductivity(model, "x", "y", omega)
+        sigma = electrical_conductivity(model, "x", "y", omega, beta)
         sigmas = np.append(sigmas, sigma)
 
     return sigmas
