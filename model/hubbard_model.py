@@ -28,7 +28,7 @@ def _Steffensen(array):
         val : 収束が早い数列の値
     """
 
-    if array.size <= 3:
+    if array.size < 3:
         raise ValueError("Array must contain at least three elements for Steffensen's method.")
 
     try:
@@ -39,10 +39,10 @@ def _Steffensen(array):
         res = p0 - (p0 - p1) ** 2 / denominator
         return res
     except ZeroDivisionError as e:
-        # print(f"Error: {e}")
+        print(f"Error: {e}")
         return array[-1]  # 収束しない場合は最新の値を返す
     except Exception as e:
-        # print(f"Unexpected error: {e}")
+        print(f"Unexpected error: {e}")
         return array[-1]  # 収束しない場合は最新の値を返す
 
 def _spin(enes, eigenstate):
@@ -132,11 +132,6 @@ class HubbardModel:
             err (float,optional): 収束条件. Defaults to 1e-6.
         """
 
-        # 一度やったらもうやらない。
-        if(self.Ef_scf.size > 1):
-            print("SCF calculation was already done.")
-            return
-
         print("SCF calculation start. N = {:1.2f}, Ud = {:1.2f}, err < {:1.1e}".format(self.n_carrier,self.U,err))
 
         kx,ky = self._gen_kmesh()
@@ -144,12 +139,12 @@ class HubbardModel:
         # ここから自己無頓着方程式のループになる
         for scf_iteration in range(1, iteration+1):
             # Steffensen の反復法
-            for m in range(3):
+            for m in range(2):
                 # フェルミエネルギーを求める
                 enes = []
                 eigenEnes = np.zeros((self.k_mesh,self.k_mesh,self.n_orbit*2))
                 eigenStates = np.zeros((self.k_mesh,self.k_mesh,self.n_orbit*2,self.n_orbit*2),dtype=np.complex128)
-                Delta   = _delta(self.N_site_scf[-1])
+                Delta   = self.Delta_scf[-1]
 
                 # ブリュアンゾーン内の全探査
                 for i in range(self.k_mesh):
@@ -165,49 +160,36 @@ class HubbardModel:
                 sorted_enes = np.sort(enes)
                 ef = (sorted_enes[int(self.k_mesh * self.k_mesh * self.n_carrier) - 1]
                       + sorted_enes[int(self.k_mesh * self.k_mesh * self.n_carrier)])/2
-                self.Ef_scf = np.append(self.Ef_scf,ef)
 
-                # scf で求める値の初期化
-                nsite  = np.zeros((self.n_orbit*2))
-                etot   = 0
-
-                nsite += sum(np.abs(eigenStates[i,j][:,l])**2
+                # ef をもとに物理量の計算
+                nsite = sum(np.abs(eigenStates[i,j][:,l])**2
                     for i in range(self.k_mesh)
                     for j in range(self.k_mesh)
                     for l in range(self.n_orbit*2)
-                    if eigenEnes[i,j,l] <= ef)
+                    if eigenEnes[i,j,l] <= ef) / (self.k_mesh * self.k_mesh)
 
-                etot += sum(eigenEnes[i,j,l]
+                etot = sum(eigenEnes[i,j,l]
                         for i in range(self.k_mesh)
                         for j in range(self.k_mesh)
                         for l in range(self.n_orbit*2)
-                        if eigenEnes[i,j,l] <= ef)
+                        if eigenEnes[i,j,l] <= ef) / (self.k_mesh * self.k_mesh)
 
-                # 規格化して足す
-                nsite /= self.k_mesh * self.k_mesh
-                self.N_site_scf = np.vstack((self.N_site_scf,nsite))
 
+                # リストに追加
                 self.Delta_scf = np.append(self.Delta_scf,_delta(nsite))
-
-                etot /= self.k_mesh * self.k_mesh
+                self.Ef_scf = np.append(self.Ef_scf,ef)
                 self.Etot_scf = np.append(self.Etot_scf,etot)
-
 
             del m
 
             # Steffensen の反復法
-            ef = _Steffensen(self.Ef_scf)
-            self.Ef_scf = np.append(self.Ef_scf,ef)
-
             delta = _Steffensen(self.Delta_scf)
             self.Delta_scf = np.append(self.Delta_scf,delta)
-
+            # 数合わせ
+            ef = _Steffensen(self.Ef_scf)
+            self.Ef_scf = np.append(self.Ef_scf,ef)
             etot = _Steffensen(self.Etot_scf)
             self.Etot_scf = np.append(self.Etot_scf,etot)
-
-            nsite = _Steffensen(self.N_site_scf)
-            self.N_site_scf = np.vstack((self.N_site_scf,nsite))
-
 
             # 与えられた誤差の範囲に収まったら終了する
             if(np.abs(self.Delta_scf[-1]-self.Delta_scf[-2]) < err) :
