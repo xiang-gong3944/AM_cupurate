@@ -93,7 +93,69 @@ def kF_index(model):
     return
 
 
-def spin_conductivity(model,mu,nu,omega=0,gamma=0.0001):
+def spin_current_matrix(model,mu: str):
+    """固有状態基底でのスピン流演算子を返す
+
+    Args:
+        model : 強束縛模型
+        mu (str): 流れの方向
+
+    Returns:
+        spin_current (ndarray): (k_mesh, k_mesh, n_orbit, n_orbit) のスピン流演算子
+    """
+
+    kx, ky = model._gen_kmesh()
+    k_mesh = model.k_mesh
+    n_orbit = model.n_orbit*2
+
+    # もとの基底のスピン行列
+    spin_current = np.array([
+        model.SpinCurrent(kx[i, j], ky[i, j], mu)
+        for i in range(k_mesh) for j in range(k_mesh)
+    ]).reshape(k_mesh, k_mesh, n_orbit, n_orbit)
+
+    # 固有状態の基底のスピン行列
+    spin_current = np.einsum(
+        '...ji,...jk,...kl->...il',
+        np.conjugate(model.eigenStates),  # 転置共役
+        spin_current,                     # スピン流演算子
+        model.eigenStates                 # 固有状態
+    )
+
+    return spin_current
+
+
+def electrical_current_matrix(model,mu: str):
+    """固有状態基底での電流演算子を返す
+
+    Args:
+        model : 強束縛模型
+        mu (str): 流れの方向
+
+    Returns:
+        electrical_current (ndarray): (k_mesh, k_mesh, n_orbit, n_orbit) の電流演算子
+    """
+
+    kx, ky = model._gen_kmesh()
+    k_mesh = model.k_mesh
+    n_orbit = model.n_orbit*2
+
+    # もとの基底のスピン行列
+    electrical_current = np.array([
+        model.Current(kx[i, j], ky[i, j], mu)
+        for i in range(k_mesh) for j in range(k_mesh)
+    ]).reshape(k_mesh, k_mesh, n_orbit, n_orbit)
+
+    # 固有状態の基底のスピン行列
+    electrical_current = np.einsum(
+        '...ji,...jk,...kl->...il',
+        np.conjugate(model.eigenStates),  # 転置共役
+        electrical_current,               # スピン流演算子
+        model.eigenStates                 # 固有状態
+    )
+    return electrical_current
+
+
     """スピン伝導度の計算
 
     Args:

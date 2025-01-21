@@ -292,6 +292,110 @@ def fermi_surface(model, beta=100, **kwargs):
     return
 
 
+def spin_current(model, mu, beta=500, **kwargs):
+    option = {**defaults, **kwargs}
+
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    ax.set_xlim(-np.pi,np.pi)
+    ax.set_ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    velocity = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
+    J_matrices = calc.spin_current_matrix(model, mu)
+
+    for i in range(model.k_mesh):
+        for j in range(model.k_mesh):
+            velocity[i,j] = np.sum(np.diag(J_matrices[i,j]) * calc.fermi_dist(model.enes[i,j], model.ef, beta))
+
+    real_v = velocity.real
+    velocity_max = np.max(np.abs(real_v))
+    velocity_min = -velocity_max
+
+    kx, ky = model._gen_kmesh()
+    mappable = ax.pcolormesh(kx, ky, real_v, cmap="seismic", vmax=velocity_max, vmin=velocity_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$J_{{ {:s} }}^s,\,N =$ {:1.1f} ".format(mu, model.n_carrier))
+    ax.axis("equal")
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] + "spin_J" + mu + model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+        print("generated spin current on fermi surface\n")
+
+    return
+
+
+def electrical_current(model, mu, beta=500, **kwargs):
+    option = {**defaults, **kwargs}
+
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    ax.set_xlim(-np.pi,np.pi)
+    ax.set_ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    velocity = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
+    J_matrices = calc.electrical_current_matrix(model, mu)
+
+    for i in range(model.k_mesh):
+        for j in range(model.k_mesh):
+            velocity[i,j] = np.sum(np.diag(J_matrices[i,j]) * calc.fermi_dist(model.enes[i,j], model.ef, beta))
+
+    real_v = velocity.real
+    velocity_max = np.max(np.abs(real_v))
+    velocity_min = -velocity_max
+
+    kx, ky = model._gen_kmesh()
+    mappable = ax.pcolormesh(kx, ky, real_v, cmap="seismic", vmax=velocity_max, vmin=velocity_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$J_{{ {:s} }}^e,\,N =$ {:1.1f} ".format(mu, model.n_carrier))
+    ax.axis("equal")
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] + "electrical_J" + mu + model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+        print("generated electrical current on fermi surface\n")
+
+    return
+
+
 def spin_conductivity(model, mu: str, nu: str, **kwargs):
     option = {**defaults, **kwargs}
 
