@@ -92,14 +92,7 @@ class HubbardModel:
 
         self.Hamiltonian = partial(op.Hamiltonian,a0 = self.a,Ud = self.U)
         self.SpinCurrent = partial(op.SpinCurrent,a0 = self.a)
-        self.Current = partial(op.SpinCurrent,a0 = self.a)
-        self.n_orbit = op.n_orbit
-
-        ne1 = n_carrier/4.0 + 0.1
-        ne2 = n_carrier/4.0 - 0.1
-        self.N_site_scf = np.array([
-                        [ne1,ne2,0,0,0,0,ne2,ne1,0,0,0,0]])
-        self.Ef_scf  = np.array([0])
+        self.Current = partial(op.Current,a0 = self.a)
         self.Delta_scf = np.array([-0.2])
         self.Etot_scf = np.array([0.8])
 
@@ -117,6 +110,11 @@ class HubbardModel:
         self.chi_yy = None
         self.chi_xy = None
         self.chi_yx = None
+
+        self.sigma_xx = None
+        self.sigma_yy = None
+        self.sigma_xy = None
+        self.sigma_yx = None
 
         self.kF_index = np.array([[-1,-1,-1]])
 

@@ -9,6 +9,15 @@ import plotly.graph_objects as go
 from model import calc
 from model.hubbard_model import _spin
 
+from util import post
+
+# デフォルトのプロットオプション
+defaults = {
+        "folder_path": "./output/temp/",
+        "is_plt_show": True,
+        "is_post": False,
+    }
+
 k_points = {}
 k_points["Γ"]       = [0.0, 0.0]
 k_points["X"]        = [np.pi, 0.0]
@@ -20,67 +29,6 @@ k_points["Σ'"]      = [-np.pi/2, np.pi/2]
 
 path       = [("Γ","Y"),("Y","M'"),("M'","Σ'"),("Σ'","Γ"),
                            ("Γ","Σ"),("Σ","M"),("M","X"),("X","Γ")]
-
-def nsite(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
-
-    plt.figure(figsize=[12.8,4.8])
-    plt.subplot(121)
-    for i in range(model.n_orbit):
-        plt.plot(model.N_site_scf[:,i], label = "site {:d} = {:.3f}".format(i, model.N_site_scf[-1, i]))
-    plt.legend()
-    plt.subplot(122)
-    for i in range(model.n_orbit,model.n_orbit*2):
-        plt.plot(model.N_site_scf[:,i], label = "site {:d} = {:.3f}".format(i, model.N_site_scf[-1, i]))
-    plt.legend()
-
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-
-    image_path = folder_path +"nsite"+ model.file_index
-    plt.savefig(image_path, bbox_inches='tight')
-
-    if is_plt_show:
-        plt.show()
-    else:
-        plt.close()
-
-    return
-
-
-def scf(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    ax1.set_xlabel("scf loop")
-
-    ax1.set_ylabel("Delta")
-    ax1.plot(model.Delta_scf, label="Delta = {:.5f}".format(model.Delta_scf[-1]), color = "tab:blue")
-
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("Ef (eV)")
-    ax2.plot(model.Ef_scf, label="Ef = {:.5f}".format(model.Ef_scf[-1]), color = "tab:orange")
-    h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax1.legend(h1+h2, l1+l2)
-
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-
-    image_path = folder_path +"scf"+ model.file_index
-    plt.savefig(image_path, bbox_inches='tight')
-
-    if is_plt_show:
-        plt.show()
-    else:
-        plt.close()
-
-    return
 
 
 def __gen_kpath(path, npoints = 50):
@@ -120,10 +68,8 @@ def __gen_kpath(path, npoints = 50):
     return k_path, labels, labels_loc, distances
 
 
-def band(model, folder_path="./output/temp/", is_plt_show = True):
-    if(model.Ef_scf.size < 2):
-        print("SCF calculation wasn't done yet.")
-        return
+def band(model, **kwargs):
+    option = {**defaults, **kwargs}
 
     k_path, label, label_loc, distances = __gen_kpath(path)
 
@@ -161,8 +107,8 @@ def band(model, folder_path="./output/temp/", is_plt_show = True):
     plt.xlim(label_loc[0], label_loc[-1])
     plt.ylim(Ymin, Ymax)
 
-    colors = ["tab:blue", "tab:green","tab:orange"]
-    cmap_name = LinearSegmentedColormap.from_list("custom",colors, 10)
+    colors = ["tab:blue", "tab:purple","tab:red"]
+    cmap_name = LinearSegmentedColormap.from_list("custom",colors)
 
     for i in range(model.n_orbit*2):
         plt.scatter(distances, bands[:,i], c=spins[:,i]/2, cmap=cmap_name, vmin=-0.5, vmax=0.5, s=1)
@@ -173,13 +119,16 @@ def band(model, folder_path="./output/temp/", is_plt_show = True):
     plt.title("$E_f$ = {:.5f}".format(model.ef))
     plt.colorbar()
 
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
 
-    image_path = folder_path +"band"+ model.file_index
+    image_path = option["folder_path"] +"band"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
-    if is_plt_show:
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
         plt.show()
     else:
         plt.close()
@@ -251,7 +200,9 @@ def band3d(model):
     return
 
 
-def dos(model, folder_path="./output/temp/", is_plt_show =True):
+def dos(model, **kwargs):
+    option = {**defaults, **kwargs}
+
     if(model.dos.size < 2):
         calc.dos(model)
 
@@ -267,13 +218,16 @@ def dos(model, folder_path="./output/temp/", is_plt_show =True):
     plt.vlines(model.ef, -0.04*ysacale, 1.04*ysacale, color="gray", linestyles="dashed")
     plt.title("Ef={:.2f} eV".format(model.ef))
 
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
 
-    image_path = folder_path +"dos"+ model.file_index
+    image_path = option["folder_path"] +"dos"+ model.file_index
     plt.savefig(image_path, bbox_inches='tight')
 
-    if is_plt_show:
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
         plt.show()
     else:
         plt.close()
@@ -281,90 +235,17 @@ def dos(model, folder_path="./output/temp/", is_plt_show =True):
     return
 
 
-def fermi_surface(model, folder_path="./output/temp/", is_plt_show = True, is_rotate = False):
-    if(model.kF_index.size == 3):
-        calc.kF_index(model)
+def fermi_surface(model, beta=500, **kwargs):
+    option = {**defaults, **kwargs}
 
-    colors = np.full(model.kF_index.shape[0], "tab:green")
-    colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] < -0.1] = "tab:blue"
-    colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] > 0.1] = "#ff7f0e"
-    # colors[model.spins[model.kF_index[:, 0], model.kF_index[:, 1], model.kF_index[:, 2]] > 0.1] = "tab:orange" # これだとエラーが出る
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.yaxis.set_ticks_position('both')
-    ax.xaxis.set_ticks_position('both')
-    plt.rcParams['xtick.direction'] = 'in'
-    plt.rcParams['ytick.direction'] = 'in'
-    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
-    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
-
-    plt.rcParams['font.size'] = 14
-    plt.rcParams['font.family'] ='Times New Roman'
-    plt.rcParams['mathtext.fontset'] = 'stix'
-
-    kx, ky = model._gen_kmesh()
-    if (is_rotate):
-        rotate_kx = (kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
-        rotate_ky = (-kx[model.kF_index[:, 0], model.kF_index[:, 1]] + ky[model.kF_index[:, 0], model.kF_index[:, 1]]) / 2
-        plt.scatter(rotate_kx, rotate_ky, c=colors, s=0.1)
-        plt.scatter(rotate_kx+np.pi, rotate_ky+np.pi, c=colors, s=0.1)
-        plt.scatter(rotate_kx+np.pi, rotate_ky-np.pi, c=colors, s=0.1)
-        plt.scatter(rotate_kx-np.pi, rotate_ky+np.pi, c=colors, s=0.1)
-        plt.scatter(rotate_kx-np.pi, rotate_ky-np.pi, c=colors, s=0.1)
-
-        plt.plot([np.pi, 0, -np.pi, 0, np.pi], [0, np.pi, 0, -np.pi, 0], linestyle = "dashed", c = "grey")
-        plt.arrow(-2.1,2.1, 4.2, -4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color ="grey")
-        plt.arrow(-2.1, -2.1, 4.2, 4.2, width=0.01,head_width=0.05,head_length=0.2,length_includes_head=True, color = "grey")
-        plt.text(2.3, -2.3, "$k_x$")
-        plt.text(2.3, 2.3, "$k_y$")
-
-        plt.xlabel("$k_x'$")
-        plt.ylabel("$k_y'$")
-
-    else:
-        kF_index_arr = np.array(model.kF_index)
-
-        # Spinsの値に基づいて色を選択
-        colors = np.select(
-            [model.spins[kF_index_arr[:, 0], kF_index_arr[:, 1], kF_index_arr[:, 2]] > 0.1,
-            model.spins[kF_index_arr[:, 0], kF_index_arr[:, 1], kF_index_arr[:, 2]] < -0.1],
-            ["tab:orange", "tab:blue"],
-            default="tab:green"
-        )
-
-        # 座標を取り出し
-        points = np.array([(kx[i, j], ky[i, j]) for i, j, m in model.kF_index])
-
-        plt.scatter(points[:, 0], points[:, 1], c=colors, s=0.1)
-        plt.xlabel("$k_x$")
-        plt.ylabel("$k_y$")
-
-    plt.axis("square")
-    plt.xlim(-np.pi, np.pi)
-    plt.ylim(-np.pi, np.pi)
-
-    if not os.path.isdir(folder_path):
-        os.makedirs(folder_path)
-
-    image_path = folder_path +"fermi"+ model.file_index
-    plt.savefig(image_path, bbox_inches='tight')
-
-    if is_plt_show:
-        plt.show()
-    else:
-        plt.close()
-    return
-
-
-def spin(model, beta:float = 1000):
-    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2)
-    kx, ky = model._gen_kmesh()
+    # プロットエリアの整備
     fig, ax = plt.subplots()
     ax.yaxis.set_ticks_position('both')
     ax.xaxis.set_ticks_position('both')
     plt.rcParams['xtick.direction'] = 'in'
     plt.rcParams['ytick.direction'] = 'in'
+    plt.xlim(-np.pi,np.pi)
+    plt.ylim(-np.pi,np.pi)
     plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
     plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
 
@@ -375,19 +256,148 @@ def spin(model, beta:float = 1000):
     plt.rcParams['font.family'] ='Times New Roman'
     plt.rcParams['mathtext.fontset'] = 'stix'
 
+    # スピン分裂の表示
+    kx, ky = model._gen_kmesh()
+    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2)
     spin_max = np.max(np.abs(spin))
     spin_min = -spin_max
+    mappable = ax.pcolormesh(kx, ky, spin, cmap="seismic", vmax=spin_max, vmin = spin_min)
+    # plt.colorbar(mappable, ax=ax)
 
-    mappable = ax.pcolormesh(kx, ky, spin, cmap="bwr", vmax=spin_max, vmin = spin_min)
-    plt.colorbar(mappable, ax=ax)
+    # フェルミ面の表示 スピン分裂がないところだけ散布図でプロットすることであたかも重なって紫になってるように見える。
+    abs_spin_spit = 1 - (np.abs(spin) - np.min(np.abs(spin)))/(np.max(np.abs(spin)) - np.min(np.abs(spin)))
+    fermi_surf = np.sum(-calc.fermi_dist_diff(model.enes, model.ef, beta),  axis=2)
+    fermi_surf = (fermi_surf - np.min(fermi_surf))/(np.max(fermi_surf) - np.min(fermi_surf))
+    fermi_surf = fermi_surf * abs_spin_spit
+    ax.scatter(kx, ky, c="tab:purple", alpha=fermi_surf, s=0.1)
 
+    plt.title("$N$ = {:1.1f}".format(model.n_carrier))
     plt.axis("square")
-    plt.show()
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] +"fermi"+ model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+        print("generated fermi surface\n")
 
     return
 
 
-def spin_conductivity(model, mu: str, nu: str):
+def spin_current(model, mu, beta=500, **kwargs):
+    option = {**defaults, **kwargs}
+
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    ax.set_xlim(-np.pi,np.pi)
+    ax.set_ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    velocity = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
+    J_matrices = calc.spin_current_matrix(model, mu)
+
+    for i in range(model.k_mesh):
+        for j in range(model.k_mesh):
+            velocity[i,j] = np.sum(np.diag(J_matrices[i,j]) * calc.fermi_dist(model.enes[i,j], model.ef, beta))
+
+    real_v = velocity.real
+    velocity_max = np.max(np.abs(real_v))
+    velocity_min = -velocity_max
+
+    kx, ky = model._gen_kmesh()
+    mappable = ax.pcolormesh(kx, ky, real_v, cmap="seismic", vmax=velocity_max, vmin=velocity_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$J_{{ {:s} }}^s,\,N =$ {:1.1f} ".format(mu, model.n_carrier))
+    ax.axis("equal")
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] + "spin_J" + mu + model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+        print("generated spin current on fermi surface\n")
+
+    return
+
+
+def electrical_current(model, mu, beta=500, **kwargs):
+    option = {**defaults, **kwargs}
+
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    ax.set_xlim(-np.pi,np.pi)
+    ax.set_ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    velocity = np.zeros((model.k_mesh, model.k_mesh), np.complex128)
+    J_matrices = calc.electrical_current_matrix(model, mu)
+
+    for i in range(model.k_mesh):
+        for j in range(model.k_mesh):
+            velocity[i,j] = np.sum(np.diag(J_matrices[i,j]) * calc.fermi_dist(model.enes[i,j], model.ef, beta))
+
+    real_v = velocity.real
+    velocity_max = np.max(np.abs(real_v))
+    velocity_min = -velocity_max
+
+    kx, ky = model._gen_kmesh()
+    mappable = ax.pcolormesh(kx, ky, real_v, cmap="seismic", vmax=velocity_max, vmin=velocity_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$J_{{ {:s} }}^e,\,N =$ {:1.1f} ".format(mu, model.n_carrier))
+    ax.axis("equal")
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] + "electrical_J" + mu + model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+        print("generated electrical current on fermi surface\n")
+
+    return
+
+
+def spin_conductivity(model, mu: str, nu: str, **kwargs):
+    option = {**defaults, **kwargs}
 
     munu = mu + nu
     if(munu == "xy"):
@@ -414,6 +424,8 @@ def spin_conductivity(model, mu: str, nu: str):
     ax.xaxis.set_ticks_position('both')
     plt.rcParams['xtick.direction'] = 'in'
     plt.rcParams['ytick.direction'] = 'in'
+    plt.xlim(-np.pi,np.pi)
+    plt.ylim(-np.pi,np.pi)
     plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
     plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
 
@@ -427,12 +439,92 @@ def spin_conductivity(model, mu: str, nu: str):
     chi_max = np.max(np.abs(chi))
     chi_min = -chi_max
 
-    mappable = ax.pcolormesh(kx, ky, chi, cmap="bwr", vmax = chi_max, vmin=chi_min)
+    mappable = ax.pcolormesh(kx, ky, chi, cmap="seismic", vmax = chi_max, vmin=chi_min)
     plt.colorbar(mappable, ax=ax)
 
-    plt.title("$\chi_{{ {:s} }}$ = {:1.2f}".format(munu, np.sum(chi)))
+    plt.title("$\chi_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(chi), model.n_carrier))
 
     plt.axis("square")
-    plt.show()
+
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path = option["folder_path"] +f"spin_conductivity_{munu}"+ model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
+    return
+
+
+def electrical_conductivity(model, mu: str, nu: str, **kwargs):
+    option = {**defaults, **kwargs}
+
+    munu = mu + nu
+    if(munu == "xy"):
+        sigma = model.sigma_xy
+    elif(munu == "yx"):
+        sigma = model.sigma_yx
+    elif(munu == "xx"):
+        sigma = model.sigma_xx
+    elif(munu == "yy"):
+        sigma = model.sigma_yy
+    else:
+        print("invalid arguments given")
+        return
+
+    if(sigma is None):
+        print("electrical conducticity has not calculated")
+        return
+
+    sigma = sigma.real
+
+    kx, ky = model._gen_kmesh()
+    fig, ax = plt.subplots()
+    ax.yaxis.set_ticks_position('both')
+    ax.xaxis.set_ticks_position('both')
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.xlim(-np.pi,np.pi)
+    plt.ylim(-np.pi,np.pi)
+    plt.xticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+    plt.yticks([-np.pi,-np.pi/2,0,np.pi/2,np.pi],["$-\pi$","$-\pi/2$","0","$\pi/2$","$\pi$"])
+
+    plt.xlabel("$k_x$")
+    plt.ylabel("$k_y$")
+
+    plt.rcParams['font.size'] = 14
+    plt.rcParams['font.family'] ='Times New Roman'
+    plt.rcParams['mathtext.fontset'] = 'stix'
+
+    sigma_max = np.max(np.abs(sigma))
+    sigma_min = -sigma_max
+
+    mappable = ax.pcolormesh(kx, ky, sigma, cmap="seismic", vmax = sigma_max, vmin=sigma_min)
+    plt.colorbar(mappable, ax=ax)
+
+    plt.title("$\sigma_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(sigma), model.n_carrier))
+
+    plt.axis("square")
+
+    if not os.path.isdir(option["folder_path"]):
+        os.makedirs(option["folder_path"])
+
+    image_path =option["folder_path"] +f"electric_conductivity_{munu}"+ model.file_index
+    plt.savefig(image_path, bbox_inches='tight')
+
+    if(option["is_post"]):
+        post.image(image_path, image_path)
+
+    if option["is_plt_show"]:
+        plt.show()
+    else:
+        plt.close()
 
     return
