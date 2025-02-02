@@ -14,7 +14,7 @@
 フォルダの構造は以下のとおりである。
 
 ``` sh
-AM_cupurate
+AM_cuprate
 │  CuO2.ipynb           # 簡単なノート
 │  readme.md            # これ
 │  run.ipynb            # 実行テンプレート
