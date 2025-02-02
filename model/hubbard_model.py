@@ -254,6 +254,12 @@ class HubbardModel:
                 self.spins[i,j]        = np.array(spin)
         del i,j
 
+        self.nsite = sum(np.abs(self.eigenStates[i,j][:,l])**2
+                    for i in range(self.k_mesh)
+                    for j in range(self.k_mesh)
+                    for l in range(self.n_orbit*2)
+                    if self.enes[i,j,l] <= self.ef) / (self.k_mesh * self.k_mesh)
+
         print("NSCF calculation finished.\n")
         return
 
