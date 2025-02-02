@@ -22,7 +22,7 @@ Ep = 3.0
 # 軌道の数
 n_orbit = 6
 
-def Hamiltonian(kx, ky, delta, a0, Ud):
+def Hamiltonian(kx, ky, delta, a0, b0, Ud):
     """ある波数のでの平均場ハミルトニアン
     Args:
         (float) kx: 波数のx成分
@@ -34,9 +34,11 @@ def Hamiltonian(kx, ky, delta, a0, Ud):
     Returns:
         ハミルトニアンの固有値[0]と固有ベクトルの行列[1]
     """
-
     H = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
     Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp1 = Tpp * 2 * (1-b0)   # 短いpp間ホッピング
+    Tpp2 = Tpp * 2 * b0       # 長いpp間ホッピング
+
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
@@ -51,12 +53,12 @@ def Hamiltonian(kx, ky, delta, a0, Ud):
     H[1,4] = Tpd2 * np.exp(1j*(-kx+ky)*(1-a0)/2)
     H[1,5] = Tpd1 * np.exp(1j*(kx+ky)*a0/2)
 
-    H[2,3] = -2*Tpp * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
-    H[2,5] = -2*Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+    H[2,3] = -2*Tpp2 * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
+    H[2,5] = -2*Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-    H[3,4] = -2*Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+    H[3,4] = -2*Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-    H[4,5] = -2*Tpp * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
+    H[4,5] = -2*Tpp2 * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
 
     #エルミート化
     for i in range(1,n_orbit):
@@ -88,7 +90,7 @@ def Hamiltonian(kx, ky, delta, a0, Ud):
 
     return scipy.linalg.eigh(H)
 
-def Current(kx, ky, mu, a0):
+def Current(kx, ky, mu, a0, b0):
     """ある波数での電流演算子行列
 
     Args:
@@ -103,6 +105,9 @@ def Current(kx, ky, mu, a0):
 
     J = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
     Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp1 = Tpp * 2 * (1-b0)   # 短いpp間ホッピング
+    Tpp2 = Tpp * 2 * b0       # 長いpp間ホッピング
+
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
@@ -117,12 +122,12 @@ def Current(kx, ky, mu, a0):
         J[1,4] = -1j*(1-a0)/2 * Tpd2 * np.exp(1j*(-kx+ky)*(1-a0)/2)
         J[1,5] = 1j*a0/2 * Tpd1 * np.exp(1j*(kx+ky)*a0/2)
 
-        J[2,3] = Tpp * np.sin(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
-        J[2,5] = 1j*(1-2*a0) * Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[2,3] = Tpp2 * np.sin(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
+        J[2,5] = 1j*(1-2*a0) * Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[3,4] = 1j*(1-2*a0) * Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[3,4] = 1j*(1-2*a0) * Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[4,5] = Tpp * np.sin(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
+        J[4,5] = Tpp2 * np.sin(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
 
     elif (mu == "y"):
         J[0,2] = 1j*a0/2 * Tpd1 * np.exp(1j*(-kx+ky)*a0/2)
@@ -135,12 +140,12 @@ def Current(kx, ky, mu, a0):
         J[1,4] = 1j*(1-a0)/2 * Tpd2 * np.exp(1j*(-kx+ky)*(1-a0)/2)
         J[1,5] = 1j*a0/2 * Tpd1 * np.exp(1j*(kx+ky)*a0/2)
 
-        J[2,3] = -1j*(1-2*a0) * Tpp * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
-        J[2,5] = Tpp * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[2,3] = -1j*(1-2*a0) * Tpp2 * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
+        J[2,5] = Tpp1 * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[3,4] = Tpp * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[3,4] = Tpp1 * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[4,5] = 1j * (1-2*a0) * Tpp * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
+        J[4,5] = 1j * (1-2*a0) * Tpp2 * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
 
 
     elif (mu == "z"):
@@ -164,7 +169,7 @@ def Current(kx, ky, mu, a0):
 
     return J
 
-def SpinCurrent(kx, ky, mu, a0):
+def SpinCurrent(kx, ky, mu, a0, b0):
     """ある波数での電流演算子行列
 
     Args:
@@ -179,6 +184,9 @@ def SpinCurrent(kx, ky, mu, a0):
 
     J = np.zeros((n_orbit*2, n_orbit*2), dtype=np.complex128)
     Tpp = Tpp0 * 2* a0 * (1-a0) / (a0*a0 + (1-a0)*(1-a0))
+    Tpp1 = Tpp * 2 * (1-b0)   # 短いpp間ホッピング
+    Tpp2 = Tpp * 2 * b0       # 長いpp間ホッピング
+
     Tpd1 = Tpd0 * 2 * (1-a0)    # 短いホッピング
     Tpd2 = Tpd0 * 2 * a0        # 長いホッピング
 
@@ -193,12 +201,12 @@ def SpinCurrent(kx, ky, mu, a0):
         J[1,4] = -1j*(1-a0)/2 * Tpd2 * np.exp(1j*(-kx+ky)*(1-a0)/2)
         J[1,5] = 1j*a0/2 * Tpd1 * np.exp(1j*(kx+ky)*a0/2)
 
-        J[2,3] = Tpp * np.sin(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
-        J[2,5] = 1j*(1-2*a0) * Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[2,3] = Tpp2 * np.sin(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
+        J[2,5] = 1j*(1-2*a0) * Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[3,4] = 1j*(1-2*a0) * Tpp * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[3,4] = 1j*(1-2*a0) * Tpp1 * np.cos(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[4,5] = Tpp * np.sin(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
+        J[4,5] = Tpp2 * np.sin(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
 
     elif (mu == "y"):
         J[0,2] = 1j*a0/2 * Tpd1 * np.exp(1j*(-kx+ky)*a0/2)
@@ -211,12 +219,12 @@ def SpinCurrent(kx, ky, mu, a0):
         J[1,4] = 1j*(1-a0)/2 * Tpd2 * np.exp(1j*(-kx+ky)*(1-a0)/2)
         J[1,5] = 1j*a0/2 * Tpd1 * np.exp(1j*(kx+ky)*a0/2)
 
-        J[2,3] = -1j*(1-2*a0) * Tpp * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
-        J[2,5] = Tpp * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[2,3] = -1j*(1-2*a0) * Tpp2 * np.cos(kx/2) * np.exp(1j*ky*(1-2*a0)/2)
+        J[2,5] = Tpp1 * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[3,4] = Tpp * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
+        J[3,4] = Tpp1 * np.sin(ky/2) * np.exp(-1j*kx*(1-2*a0)/2)
 
-        J[4,5] = 1j * (1-2*a0) * Tpp * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
+        J[4,5] = 1j * (1-2*a0) * Tpp2 * np.cos(kx/2) * np.exp(-1j*ky*(1-2*a0)/2)
 
 
     elif (mu == "z"):

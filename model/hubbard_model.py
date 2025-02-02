@@ -2,7 +2,6 @@ import numpy as np
 from functools import partial
 
 from model import operators as op
-# from model import fork_0117 as op
 
 # ちょくちょくつかう関数
 def _delta(N_site):
@@ -75,7 +74,7 @@ def _spin(enes, eigenstate):
 
 
 class HubbardModel:
-    def __init__(self,n_carrier=2.0,k_mesh=31,U=8,a=0.5,iteration=400,err=1e-6,fineness=5):
+    def __init__(self,n_carrier=2.0,k_mesh=31,U=8,a=0.5,b=0.5,iteration=400,err=1e-6,fineness=5):
         """モデルのパラメータの設定
 
         Args:
@@ -87,15 +86,16 @@ class HubbardModel:
         # 系のパラメータ
         self.n_carrier = n_carrier
         self.a = a
+        self.b = b
         self.k_mesh = k_mesh        # 自己無撞着計算 が終わると fineness がかかった値になる
         self.k_mesh_fine = k_mesh
         self.U = U
         self.n_orbit = op.n_orbit
 
         # 系の演算子
-        self.Hamiltonian = partial(op.Hamiltonian,a0 = self.a,Ud = self.U)
-        self.SpinCurrent = partial(op.SpinCurrent,a0 = self.a)
-        self.Current = partial(op.Current,a0 = self.a)
+        self.Hamiltonian = partial(op.Hamiltonian,a0 = self.a,b0 = b,Ud = self.U)
+        self.SpinCurrent = partial(op.SpinCurrent,a0 = self.a,b0 = self.b)
+        self.Current = partial(op.Current,a0 = self.a, b0 = self.b)
 
         # 秩序変数の履歴
         self.Delta_scf = np.array([-0.2])
@@ -128,7 +128,8 @@ class HubbardModel:
 
         self.kF_index = np.array([[-1,-1,-1]])
 
-        self.file_index = "_a{:02d}k{:d}Ud{:04d}.png".format(int(self.a*100), self.k_mesh, int(self.U*100))
+        self.file_index = "_a{:02d}b{:02d}k{:d}Ud{:04d}.png".format(
+            int(self.a*100), int(self.b*100), self.k_mesh, int(self.U*100))
 
         self._calc_scf(iteration ,err)
         self._calc_nscf(fineness)
