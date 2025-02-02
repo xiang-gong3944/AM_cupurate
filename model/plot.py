@@ -272,7 +272,7 @@ def fermi_surface(model, beta=500, **kwargs):
     ax.scatter(kx, ky, c="tab:purple", alpha=fermi_surf, s=0.1)
 
     plt.title("$N$ = {:1.1f}".format(model.n_carrier))
-    plt.axis("square")
+    ax.set_box_aspect(1)
 
     if not os.path.isdir(option["folder_path"]):
         os.makedirs(option["folder_path"])
@@ -444,7 +444,7 @@ def spin_conductivity(model, mu: str, nu: str, **kwargs):
 
     plt.title("$\chi_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(chi), model.n_carrier))
 
-    plt.axis("square")
+    ax.set_box_aspect(1)
 
 
     if not os.path.isdir(option["folder_path"]):
@@ -511,7 +511,7 @@ def electrical_conductivity(model, mu: str, nu: str, **kwargs):
 
     plt.title("$\sigma_{{ {:s} }} =$ {:1.2f}, $N =$ {:1.1f} ".format(munu, np.sum(sigma), model.n_carrier))
 
-    plt.axis("square")
+    ax.set_box_aspect(1)
 
     if not os.path.isdir(option["folder_path"]):
         os.makedirs(option["folder_path"])
