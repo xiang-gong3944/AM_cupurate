@@ -258,16 +258,14 @@ def fermi_surface(model, beta=500, **kwargs):
 
     # スピン分裂の表示
     kx, ky = model._gen_kmesh()
-    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2)
-    spin_max = np.max(np.abs(spin))
-    spin_min = -spin_max
-    mappable = ax.pcolormesh(kx, ky, spin, cmap="seismic", vmax=spin_max, vmin = spin_min)
-    # plt.colorbar(mappable, ax=ax)
+    spin = np.sum(model.spins * calc.fermi_dist(model.enes, model.ef, beta), axis=2).clip(-0.5,0.5)
+    mappable = ax.pcolormesh(kx, ky, spin, cmap="seismic", vmax=0.5, vmin = -0.5)
+    plt.colorbar(mappable, ax=ax)
 
     # フェルミ面の表示 スピン分裂がないところだけ散布図でプロットすることであたかも重なって紫になってるように見える。
-    abs_spin_spit = 1 - (np.abs(spin) - np.min(np.abs(spin)))/(np.max(np.abs(spin)) - np.min(np.abs(spin)))
+    abs_spin_spit = 1 - np.abs(spin)*2
     fermi_surf = np.sum(-calc.fermi_dist_diff(model.enes, model.ef, beta),  axis=2)
-    fermi_surf = (fermi_surf - np.min(fermi_surf))/(np.max(fermi_surf) - np.min(fermi_surf))
+    fermi_surf = fermi_surf / np.max(fermi_surf)
     fermi_surf = fermi_surf * abs_spin_spit
     ax.scatter(kx, ky, c="tab:purple", alpha=fermi_surf, s=0.1)
 
